@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+
+# Virtual envs
+.venv/
+venv/
+ENV/
+
+# OS/editor cruft
+.DS_Store
+*.swp
+*.swo
+
+# Local pipes/temp artifacts
+.lgd-*
