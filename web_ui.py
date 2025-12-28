@@ -111,21 +111,24 @@ HTML = """
 """
 
 
-def _build_common_args(*, boot_guard_seconds: str, dry_run: bool, active_low: bool) -> list[str]:
+def _build_base_args() -> list[str]:
     # IMPORTANT: default to system python for GPIO access.
     # The dev web server may run in a venv without GPIO pin-factory backends.
-    args: list[str] = [FIREPLACE_CLI_PYTHON, FIREPLACE_PY]
+    return [FIREPLACE_CLI_PYTHON, FIREPLACE_PY]
 
-    if dry_run:
-        args.append("--dry-run")
-    if active_low:
-        args.append("--active-low")
 
-    # Only meaningful for ignite/on/off, but harmless to include.
+def _add_common_after_subcommand(
+    argv: list[str], *, boot_guard_seconds: str, dry_run: bool, active_low: bool
+) -> list[str]:
+    # fireplace.py defines these as subcommand options (via argparse parents),
+    # so they must appear AFTER the subcommand name.
     if boot_guard_seconds.strip() != "":
-        args += ["--boot-guard-seconds", boot_guard_seconds]
-
-    return args
+        argv += ["--boot-guard-seconds", boot_guard_seconds]
+    if dry_run:
+        argv.append("--dry-run")
+    if active_low:
+        argv.append("--active-low")
+    return argv
 
 
 def _cli_env() -> dict[str, str]:
@@ -210,10 +213,12 @@ def run_action():
     dry_run = request.form.get("dry_run") == "on"
     active_low = request.form.get("active_low") == "on"
 
-    common = _build_common_args(boot_guard_seconds=boot_guard_seconds, dry_run=dry_run, active_low=active_low)
-
     if action == "ignite_pulse":
-        argv = common + ["ignite", "--main-relay", "low_flame", "--pulse-ms", pulse_ms]
+        argv = _build_base_args() + ["ignite"]
+        argv = _add_common_after_subcommand(
+            argv, boot_guard_seconds=boot_guard_seconds, dry_run=dry_run, active_low=active_low
+        )
+        argv += ["--main-relay", "low_flame", "--pulse-ms", pulse_ms]
         result = _run_sync("ignite_pulse", argv)
         with _lock:
             _last_result = result
@@ -230,7 +235,11 @@ def run_action():
                     output="Hold process already running.",
                 )
             else:
-                argv = common + ["on", "--main-relay", "low_flame"]
+                argv = _build_base_args() + ["on"]
+                argv = _add_common_after_subcommand(
+                    argv, boot_guard_seconds=boot_guard_seconds, dry_run=dry_run, active_low=active_low
+                )
+                argv += ["--main-relay", "low_flame"]
                 if hold_seconds != "":
                     argv += ["--hold-seconds", hold_seconds]
 
@@ -268,7 +277,11 @@ def run_action():
             _last_result = result
 
         # Also ensure we actively open the relay via CLI (belt + suspenders).
-        argv = common + ["off", "--main-relay", "low_flame"]
+        argv = _build_base_args() + ["off"]
+        argv = _add_common_after_subcommand(
+            argv, boot_guard_seconds=boot_guard_seconds, dry_run=dry_run, active_low=active_low
+        )
+        argv += ["--main-relay", "low_flame"]
         sync = _run_sync("off", argv)
         with _lock:
             _last_result = RunResult(
