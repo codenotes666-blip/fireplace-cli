@@ -17,6 +17,7 @@ APP = Flask(__name__)
 
 
 FIREPLACE_PY = os.path.join(os.path.dirname(__file__), "fireplace.py")
+FIREPLACE_CLI_PYTHON = os.getenv("FIREPLACE_CLI_PYTHON", "python3")
 
 
 @dataclass
@@ -111,7 +112,9 @@ HTML = """
 
 
 def _build_common_args(*, boot_guard_seconds: str, dry_run: bool, active_low: bool) -> list[str]:
-    args: list[str] = [sys.executable, FIREPLACE_PY]
+    # IMPORTANT: default to system python for GPIO access.
+    # The dev web server may run in a venv without GPIO pin-factory backends.
+    args: list[str] = [FIREPLACE_CLI_PYTHON, FIREPLACE_PY]
 
     # Keep CLI colors off for captured output (web view).
     args += ["--color", "never"]

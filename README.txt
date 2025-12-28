@@ -111,3 +111,4 @@ Install and run
 Environment variables
 - FIREPLACE_WEB_HOST (default: 127.0.0.1)
 - FIREPLACE_WEB_PORT (default: 8080)
+- FIREPLACE_CLI_PYTHON (default: python3) - which Python runs fireplace.py when invoked by the web UI
