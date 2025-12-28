@@ -16,3 +16,7 @@ ENV/
 
 # Local pipes/temp artifacts
 .lgd-*
+
+# Web UI runtime artifacts
+.web_ui.pid
+.web_ui.log
