@@ -116,9 +116,6 @@ def _build_common_args(*, boot_guard_seconds: str, dry_run: bool, active_low: bo
     # The dev web server may run in a venv without GPIO pin-factory backends.
     args: list[str] = [FIREPLACE_CLI_PYTHON, FIREPLACE_PY]
 
-    # Keep CLI colors off for captured output (web view).
-    args += ["--color", "never"]
-
     if dry_run:
         args.append("--dry-run")
     if active_low:
@@ -131,11 +128,19 @@ def _build_common_args(*, boot_guard_seconds: str, dry_run: bool, active_low: bo
     return args
 
 
+def _cli_env() -> dict[str, str]:
+    env = dict(os.environ)
+    # Keep CLI colors off for captured output (web view).
+    env["FIREPLACE_COLOR"] = "never"
+    env["NO_COLOR"] = "1"
+    return env
+
+
 def _run_sync(action: str, argv: list[str]) -> RunResult:
     started = time.time()
     cmd_str = " ".join(shlex.quote(a) for a in argv)
     try:
-        cp = subprocess.run(argv, capture_output=True, text=True, timeout=60)
+        cp = subprocess.run(argv, capture_output=True, text=True, timeout=60, env=_cli_env())
         out = (cp.stdout or "") + (cp.stderr or "")
         return RunResult(when=started, action=action, command=cmd_str, exit_code=cp.returncode, output=out.strip())
     except Exception as e:
@@ -231,7 +236,13 @@ def run_action():
 
                 cmd_str = " ".join(shlex.quote(a) for a in argv)
                 try:
-                    _hold_proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                    _hold_proc = subprocess.Popen(
+                        argv,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                        env=_cli_env(),
+                    )
                     _hold_cmd = cmd_str
                     _last_result = RunResult(
                         when=time.time(),
