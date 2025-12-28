@@ -97,3 +97,17 @@ Environment variable option
 - export FIREPLACE_HIGH_RELAY=high_flame
 - export FIREPLACE_ACTIVE_LOW=1   (only if needed)
 - python3 fireplace.py ignite
+
+Local web UI (simple front-end)
+- A minimal local-only web server that calls fireplace.py for you.
+- Runs on 127.0.0.1:8080 by default.
+
+Install and run
+- cd ~/fireplace-cli
+- python3 -m pip install -r requirements-web.txt
+- python3 web_ui.py
+- Open: http://127.0.0.1:8080
+
+Environment variables
+- FIREPLACE_WEB_HOST (default: 127.0.0.1)
+- FIREPLACE_WEB_PORT (default: 8080)
